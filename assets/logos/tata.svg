@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Tata Motors logo placeholder">
+  <rect width="240" height="240" rx="120" fill="#0057a6"/>
+  <ellipse cx="120" cy="95" rx="74" ry="44" fill="none" stroke="#fff" stroke-width="10"/>
+  <path d="M75 95h90M120 95v54" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+  <text x="120" y="188" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="24" fill="#fff">TATA</text>
+</svg>

@@ -2,23 +2,23 @@
   "logos": [
     {
       "brand": "Tata Motors",
-      "logoPath": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Tata_logo.svg"
+      "logoPath": "assets/logos/tata.svg"
     },
     {
       "brand": "Mahindra",
-      "logoPath": "https://upload.wikimedia.org/wikipedia/commons/3/34/Mahindra_Rise_New_Logo.svg"
+      "logoPath": "assets/logos/mahindra.svg"
     },
     {
       "brand": "Maruti Suzuki",
-      "logoPath": "https://upload.wikimedia.org/wikipedia/en/2/2e/Maruti_Suzuki_logo.svg"
+      "logoPath": "assets/logos/maruti-suzuki.svg"
     },
     {
       "brand": "Hindustan Motors",
-      "logoPath": "https://upload.wikimedia.org/wikipedia/en/8/8d/Hindustan_Motors_logo.png"
+      "logoPath": "assets/logos/hindustan-motors.svg"
     },
     {
       "brand": "Ashok Leyland",
-      "logoPath": "https://upload.wikimedia.org/wikipedia/en/9/90/Ashok_Leyland_logo.svg"
+      "logoPath": "assets/logos/ashok-leyland.svg"
     }
   ]
 }
