@@ -7,12 +7,23 @@ const selectedBrandEl = document.getElementById('selectedBrand');
 const startBtn = document.getElementById('startBtn');
 const leftBtn = document.getElementById('leftBtn');
 const rightBtn = document.getElementById('rightBtn');
+const brandGrid = document.getElementById('brandGrid');
 
 const laneCenters = [canvas.width * 0.23, canvas.width * 0.5, canvas.width * 0.77];
 const roadMargin = 55;
 
+const fallbackBrands = [
+  { brand: 'Tata Motors', logoPath: 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Tata_logo.svg' },
+  { brand: 'Mahindra', logoPath: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Mahindra_Rise_New_Logo.svg' },
+  { brand: 'Maruti Suzuki', logoPath: 'https://upload.wikimedia.org/wikipedia/en/2/2e/Maruti_Suzuki_logo.svg' },
+  { brand: 'Hindustan Motors', logoPath: 'https://upload.wikimedia.org/wikipedia/en/8/8d/Hindustan_Motors_logo.png' },
+  { brand: 'Ashok Leyland', logoPath: 'https://upload.wikimedia.org/wikipedia/en/9/90/Ashok_Leyland_logo.svg' },
+];
+
+const brandColors = ['#3f6edb', '#d44f3a', '#ffb347', '#55c66b', '#9f7aea'];
+
 let lane = 1;
-let carColor = '#ff4d4d';
+let carColor = brandColors[0];
 let score = 0;
 let bestScore = Number(localStorage.getItem('kid-racer-best') || 0);
 let running = false;
@@ -30,6 +41,35 @@ const player = {
 
 let obstacles = [];
 let stars = [];
+
+function renderBrandCards(logos) {
+  brandGrid.innerHTML = logos
+    .map((logo, index) => {
+      const selectedClass = index === 0 ? ' selected' : '';
+      const color = brandColors[index % brandColors.length];
+      return `
+        <button class="brand-card${selectedClass}" data-color="${color}" data-brand="${logo.brand}">
+          <span class="logo-circle"><img src="${logo.logoPath}" alt="${logo.brand} logo" loading="lazy"></span>
+          <span class="brand-name">${logo.brand}</span>
+        </button>
+      `;
+    })
+    .join('');
+
+  selectedBrandEl.textContent = logos[0]?.brand || 'Unknown Brand';
+  carColor = brandColors[0];
+}
+
+async function loadBrandCards() {
+  try {
+    const response = await fetch('indian-car-brand-logos.json');
+    if (!response.ok) throw new Error('logo json unavailable');
+    const data = await response.json();
+    renderBrandCards(data.logos || fallbackBrands);
+  } catch {
+    renderBrandCards(fallbackBrands);
+  }
+}
 
 function startGame() {
   lane = 1;
@@ -190,7 +230,7 @@ function loop() {
   animationId = requestAnimationFrame(loop);
 }
 
-document.getElementById('brandGrid').addEventListener('click', (event) => {
+brandGrid.addEventListener('click', (event) => {
   const card = event.target.closest('.brand-card');
   if (!card) return;
 
@@ -221,3 +261,5 @@ window.addEventListener('keydown', (event) => {
   ctx.textAlign = 'center';
   ctx.fillText('Press Start!', canvas.width / 2, canvas.height / 2);
 })();
+
+loadBrandCards();
