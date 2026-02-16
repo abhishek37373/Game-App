@@ -43,6 +43,9 @@ let running = false;
 let animationId = null;
 let gameSpeed = 4;
 let roadOffset = 0;
+let selectedLogoImg = null;
+let selectedLogoPath = fallbackBrands[0]?.logoPath || null;
+let logoLoadRequestId = 0;
 let level = 1;
 let nextLevelScore = 150;
 
@@ -78,12 +81,37 @@ let powerUps = [];
 missionEl.textContent = `Mission: Collect ${mission.goal} stars in this run`;
 powerEl.textContent = 'Power-Up: None';
 
+function preloadSelectedLogo(path) {
+  selectedLogoImg = null;
+  if (!path) return;
+
+  const requestId = ++logoLoadRequestId;
+  const logoImg = new Image();
+  logoImg.crossOrigin = 'anonymous';
+
+  logoImg.onload = () => {
+    if (requestId === logoLoadRequestId) {
+      selectedLogoImg = logoImg;
+    }
+  };
+
+  logoImg.onerror = () => {
+    if (requestId === logoLoadRequestId) {
+      selectedLogoImg = null;
+    }
+  };
+
+  logoImg.src = path;
+}
+
 function renderBrandCards(logos) {
   brandGrid.innerHTML = logos
     .map((logo, index) => {
       const selectedClass = index === 0 ? ' selected' : '';
       const color = brandColors[index % brandColors.length];
       return `
+        <button class="brand-card${selectedClass}" data-color="${color}" data-brand="${logo.brand}" data-logo-path="${logo.logoPath}">
+          <span class="logo-circle"><img src="${logo.logoPath}" alt="${logo.brand} logo" loading="lazy"></span>
         <button class="brand-card${selectedClass}" data-color="${color}" data-brand="${logo.brand}">
           <span class="logo-circle"><img src="${logo.logoPath}" alt="${logo.brand} logo" loading="lazy" data-fallback="${DEFAULT_LOGO_PATH}" onerror="if (this.dataset.errorHandled) return; this.dataset.errorHandled='1'; this.src = this.dataset.fallback;"></span>
           <span class="brand-name">${logo.brand}</span>
@@ -94,6 +122,8 @@ function renderBrandCards(logos) {
 
   selectedBrandEl.textContent = logos[0]?.brand || 'Unknown Brand';
   carColor = brandColors[0];
+  selectedLogoPath = logos[0]?.logoPath || null;
+  preloadSelectedLogo(selectedLogoPath);
 }
 
 async function loadBrandCards() {
@@ -240,10 +270,18 @@ function drawCar(x, y, color, isPlayer = false) {
   ctx.fillRect(x + 22, y + 58, 7, 20);
 
   if (isPlayer) {
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 16px Comic Sans MS';
-    ctx.textAlign = 'center';
-    ctx.fillText('YOU', x, y + 52);
+    if (selectedLogoImg?.complete && selectedLogoImg.naturalWidth > 0) {
+      const logoWidth = 28;
+      const logoHeight = 18;
+      const logoX = x - logoWidth / 2;
+      const logoY = y + 42;
+      ctx.drawImage(selectedLogoImg, logoX, logoY, logoWidth, logoHeight);
+    } else {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px Comic Sans MS';
+      ctx.textAlign = 'center';
+      ctx.fillText('YOU', x, y + 52);
+    }
   }
 }
 
@@ -493,6 +531,8 @@ brandGrid.addEventListener('click', (event) => {
   card.classList.add('selected');
   carColor = card.dataset.color;
   selectedBrandEl.textContent = card.dataset.brand;
+  selectedLogoPath = card.dataset.logoPath || null;
+  preloadSelectedLogo(selectedLogoPath);
 });
 
 startBtn.addEventListener('click', startGame);
