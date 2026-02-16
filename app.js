@@ -12,12 +12,14 @@ const brandGrid = document.getElementById('brandGrid');
 const laneCenters = [canvas.width * 0.23, canvas.width * 0.5, canvas.width * 0.77];
 const roadMargin = 55;
 
+const DEFAULT_LOGO_PATH = 'assets/logos/default-logo.svg';
+
 const fallbackBrands = [
-  { brand: 'Tata Motors', logoPath: 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Tata_logo.svg' },
-  { brand: 'Mahindra', logoPath: 'https://upload.wikimedia.org/wikipedia/commons/3/34/Mahindra_Rise_New_Logo.svg' },
-  { brand: 'Maruti Suzuki', logoPath: 'https://upload.wikimedia.org/wikipedia/en/2/2e/Maruti_Suzuki_logo.svg' },
-  { brand: 'Hindustan Motors', logoPath: 'https://upload.wikimedia.org/wikipedia/en/8/8d/Hindustan_Motors_logo.png' },
-  { brand: 'Ashok Leyland', logoPath: 'https://upload.wikimedia.org/wikipedia/en/9/90/Ashok_Leyland_logo.svg' },
+  { brand: 'Tata Motors', logoPath: 'assets/logos/tata.svg' },
+  { brand: 'Mahindra', logoPath: 'assets/logos/mahindra.svg' },
+  { brand: 'Maruti Suzuki', logoPath: 'assets/logos/maruti-suzuki.svg' },
+  { brand: 'Hindustan Motors', logoPath: 'assets/logos/hindustan-motors.svg' },
+  { brand: 'Ashok Leyland', logoPath: 'assets/logos/ashok-leyland.svg' },
 ];
 
 const brandColors = ['#3f6edb', '#d44f3a', '#ffb347', '#55c66b', '#9f7aea'];
@@ -76,6 +78,8 @@ function renderBrandCards(logos) {
       return `
         <button class="brand-card${selectedClass}" data-color="${color}" data-brand="${logo.brand}" data-logo-path="${logo.logoPath}">
           <span class="logo-circle"><img src="${logo.logoPath}" alt="${logo.brand} logo" loading="lazy"></span>
+        <button class="brand-card${selectedClass}" data-color="${color}" data-brand="${logo.brand}">
+          <span class="logo-circle"><img src="${logo.logoPath}" alt="${logo.brand} logo" loading="lazy" data-fallback="${DEFAULT_LOGO_PATH}" onerror="if (this.dataset.errorHandled) return; this.dataset.errorHandled='1'; this.src = this.dataset.fallback;"></span>
           <span class="brand-name">${logo.brand}</span>
         </button>
       `;
