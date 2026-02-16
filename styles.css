@@ -1,0 +1,124 @@
+:root {
+  --bg: #1f2544;
+  --panel: #2d376d;
+  --text: #f8fbff;
+  --road: #2f3133;
+  --line: #f4f4f4;
+  --accent: #ff4d4d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Comic Sans MS", "Trebuchet MS", sans-serif;
+  background: radial-gradient(circle at top, #3d4ca0, var(--bg));
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.app {
+  width: min(92vw, 560px);
+  padding: 1rem;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 0.2rem;
+}
+
+h2 {
+  margin: 0.4rem 0 0.7rem;
+  font-size: 1.2rem;
+}
+
+.brand-panel,
+.hud,
+.controls,
+.tips {
+  background: color-mix(in srgb, var(--panel) 80%, black 20%);
+  border-radius: 16px;
+  padding: 0.8rem;
+  margin: 0.6rem 0;
+}
+
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.brand-card {
+  border: 3px solid transparent;
+  border-radius: 14px;
+  padding: 0.7rem;
+  background: #10173d;
+  color: var(--text);
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.brand-card.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.logo-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+  background: linear-gradient(145deg, #fbfbfb, #c7d0ff);
+}
+
+.hud {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+canvas {
+  width: 100%;
+  border-radius: 16px;
+  background: var(--road);
+  border: 5px solid #ffffff22;
+}
+
+.controls {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.control-btn {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 0.8rem;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.start {
+  background: linear-gradient(145deg, #7dff9a, #38d35f);
+}
+
+.tips {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 480px) {
+  .controls {
+    flex-direction: column;
+  }
+}
