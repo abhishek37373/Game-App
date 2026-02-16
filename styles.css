@@ -48,7 +48,7 @@ h2 {
 
 .brand-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.6rem;
 }
 
@@ -71,13 +71,20 @@ h2 {
 }
 
 .logo-circle {
-  width: 56px;
-  height: 56px;
+  width: 74px;
+  height: 74px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 1.8rem;
   background: linear-gradient(145deg, #fbfbfb, #c7d0ff);
+  overflow: hidden;
+  padding: 0.6rem;
+}
+
+.logo-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .hud {
