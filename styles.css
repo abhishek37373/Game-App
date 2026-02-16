@@ -129,3 +129,18 @@ canvas {
     flex-direction: column;
   }
 }
+
+.hud .mission,
+.hud .powerup {
+  flex-basis: 100%;
+  margin: 0.2rem 0 0;
+  font-size: 0.96rem;
+}
+
+.hud .mission {
+  color: #ffe16a;
+}
+
+.hud .powerup {
+  color: #9ffcff;
+}

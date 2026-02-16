@@ -8,6 +8,17 @@ const startBtn = document.getElementById('startBtn');
 const leftBtn = document.getElementById('leftBtn');
 const rightBtn = document.getElementById('rightBtn');
 const brandGrid = document.getElementById('brandGrid');
+const hudEl = document.querySelector('.hud');
+
+const comboEl = document.createElement('p');
+comboEl.innerHTML = '<strong>Combo:</strong> <span id="comboStat">x1</span>';
+const missionEl = document.createElement('p');
+missionEl.className = 'mission';
+const powerEl = document.createElement('p');
+powerEl.className = 'powerup';
+hudEl.append(comboEl, missionEl, powerEl);
+
+const comboStatEl = document.getElementById('comboStat');
 
 const laneCenters = [canvas.width * 0.23, canvas.width * 0.5, canvas.width * 0.77];
 const roadMargin = 55;
@@ -30,6 +41,25 @@ let running = false;
 let animationId = null;
 let gameSpeed = 4;
 let roadOffset = 0;
+let level = 1;
+let nextLevelScore = 150;
+
+let comboCount = 0;
+let comboMultiplier = 1;
+let starsCollected = 0;
+
+const mission = {
+  goal: 10,
+  bonus: 120,
+  complete: false,
+};
+
+const powerState = {
+  shieldFrames: 0,
+};
+
+let levelBannerFrames = 0;
+let particles = [];
 
 bestScoreEl.textContent = bestScore;
 
@@ -41,6 +71,10 @@ const player = {
 
 let obstacles = [];
 let stars = [];
+let powerUps = [];
+
+missionEl.textContent = `Mission: Collect ${mission.goal} stars in this run`;
+powerEl.textContent = 'Power-Up: None';
 
 function renderBrandCards(logos) {
   brandGrid.innerHTML = logos
@@ -75,10 +109,23 @@ function startGame() {
   lane = 1;
   score = 0;
   gameSpeed = 4;
+  level = 1;
+  nextLevelScore = 150;
+  comboCount = 0;
+  comboMultiplier = 1;
+  starsCollected = 0;
+  mission.complete = false;
+  powerState.shieldFrames = 0;
+  levelBannerFrames = 0;
   obstacles = [];
   stars = [];
+  particles = [];
+  powerUps = [];
   running = true;
   scoreEl.textContent = score;
+  comboStatEl.textContent = 'x1';
+  missionEl.textContent = `Mission: Collect ${mission.goal} stars in this run`;
+  powerEl.textContent = 'Power-Up: None';
 
   cancelAnimationFrame(animationId);
   animationId = requestAnimationFrame(loop);
@@ -96,17 +143,60 @@ function moveRight() {
 
 function spawnObstacle() {
   const obstacleLane = Math.floor(Math.random() * 3);
-  obstacles.push({
-    lane: obstacleLane,
-    y: -110,
+  obstacles.push(createObstacle('normal', obstacleLane));
+}
+
+function createObstacle(type, laneIndex, y = -110) {
+  return {
+    type,
+    lane: laneIndex,
+    y,
+    height: 85,
+    width: 48,
     color: ['#f25757', '#7f7fff', '#5fc478'][Math.floor(Math.random() * 3)],
-  });
+    speedBoost: type === 'fast' ? 1.5 : 1,
+    weaveTick: 0,
+    weaveRate: 0.1 + Math.random() * 0.08,
+  };
+}
+
+function spawnTrafficPattern() {
+  const roll = Math.random();
+  const trafficDepth = Math.min(1 + Math.floor(level / 2), 4);
+
+  if (trafficDepth >= 2 && roll < 0.28) {
+    const leftStart = Math.random() < 0.5 ? 0 : 1;
+    obstacles.push(createObstacle('blocker', leftStart));
+    obstacles.push(createObstacle('blocker', leftStart + 1));
+    return;
+  }
+
+  if (trafficDepth >= 3 && roll < 0.5) {
+    obstacles.push(createObstacle('fast', Math.floor(Math.random() * 3)));
+    return;
+  }
+
+  if (trafficDepth >= 4 && roll < 0.68) {
+    const weaveLane = Math.random() < 0.5 ? 0 : 2;
+    obstacles.push(createObstacle('weave', weaveLane));
+    return;
+  }
+
+  spawnObstacle();
 }
 
 function spawnStar() {
   stars.push({
     lane: Math.floor(Math.random() * 3),
     y: -50,
+  });
+}
+
+function spawnPowerUp() {
+  powerUps.push({
+    type: 'shield',
+    lane: Math.floor(Math.random() * 3),
+    y: -45,
   });
 }
 
@@ -166,9 +256,67 @@ function drawStar(x, y) {
   ctx.fill();
 }
 
-function hit(aLane, aY, aH, bLane, bY, bH) {
-  if (aLane !== bLane) return false;
-  return aY < bY + bH && aY + aH > bY;
+function drawShieldPowerUp(x, y) {
+  ctx.strokeStyle = '#70f7ff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(x, y, 16, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = '#c2ffff';
+  ctx.font = 'bold 17px Comic Sans MS';
+  ctx.textAlign = 'center';
+  ctx.fillText('S', x, y + 6);
+}
+
+function drawParticles() {
+  particles.forEach((particle) => {
+    particle.x += particle.vx;
+    particle.y += particle.vy;
+    particle.vy += 0.03;
+    particle.life -= 1;
+    ctx.globalAlpha = Math.max(particle.life / particle.maxLife, 0);
+    ctx.fillStyle = particle.color;
+    ctx.beginPath();
+    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+
+  particles = particles.filter((particle) => particle.life > 0);
+}
+
+function spawnBurst(x, y, color = '#ffe16a') {
+  for (let i = 0; i < 16; i++) {
+    const angle = (Math.PI * 2 * i) / 16;
+    particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * (1 + Math.random() * 2.3),
+      vy: Math.sin(angle) * (1 + Math.random() * 2.3),
+      life: 24 + Math.floor(Math.random() * 10),
+      maxLife: 34,
+      size: 1.8 + Math.random() * 2,
+      color,
+    });
+  }
+}
+
+function hit(a, b) {
+  if (powerState.shieldFrames > 0 && b.type !== 'star' && b.type !== 'power') return false;
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function resetCombo() {
+  comboCount = 0;
+  comboMultiplier = 1;
+  comboStatEl.textContent = 'x1';
+}
+
+function consumeShieldHit(obstacle) {
+  powerState.shieldFrames = 0;
+  powerEl.textContent = 'Power-Up: None';
+  resetCombo();
+  spawnBurst(obstacle.x, obstacle.y + 30, '#7bedff');
 }
 
 function endGame() {
@@ -194,17 +342,55 @@ function loop() {
 
   drawRoad();
   const playerX = laneCenters[lane];
+  const playerRect = { x: playerX - 24, y: player.y, w: 48, h: player.height };
+
+  if (powerState.shieldFrames > 0) {
+    powerState.shieldFrames -= 1;
+    if (powerState.shieldFrames === 0) powerEl.textContent = 'Power-Up: None';
+  }
+
+  if (powerState.shieldFrames > 0) {
+    ctx.strokeStyle = '#72f5ff';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(playerX, player.y + 46, 36 + Math.sin(roadOffset / 8) * 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   drawCar(playerX, player.y, carColor, true);
 
-  if (Math.random() < 0.03) spawnObstacle();
+  const spawnRate = Math.min(0.02 + level * 0.0035, 0.055);
+  if (Math.random() < spawnRate) spawnTrafficPattern();
   if (Math.random() < 0.022) spawnStar();
+  if (Math.random() < 0.0048 && powerState.shieldFrames <= 0) spawnPowerUp();
 
   obstacles.forEach((obstacle) => {
-    obstacle.y += gameSpeed;
-    drawCar(laneCenters[obstacle.lane], obstacle.y, obstacle.color);
+    obstacle.y += gameSpeed * obstacle.speedBoost;
 
-    if (hit(lane, player.y, player.height, obstacle.lane, obstacle.y, 85)) {
-      endGame();
+    let obstacleX = laneCenters[obstacle.lane];
+    if (obstacle.type === 'weave') {
+      obstacle.weaveTick += obstacle.weaveRate;
+      obstacleX += Math.sin(obstacle.weaveTick) * 78;
+    }
+
+    obstacle.x = obstacleX;
+    drawCar(obstacleX, obstacle.y, obstacle.color);
+
+    const obstacleRect = {
+      x: obstacleX - obstacle.width / 2,
+      y: obstacle.y,
+      w: obstacle.width,
+      h: obstacle.height,
+      type: obstacle.type,
+    };
+
+    if (hit(playerRect, obstacleRect)) {
+      if (powerState.shieldFrames > 0) {
+        consumeShieldHit({ x: obstacleX, y: obstacle.y });
+        obstacle.y = canvas.height + 150;
+      } else {
+        endGame();
+      }
     }
   });
 
@@ -212,20 +398,87 @@ function loop() {
     star.y += gameSpeed + 0.7;
     drawStar(laneCenters[star.lane], star.y);
 
-    if (hit(lane, player.y, player.height, star.lane, star.y - 12, 24)) {
+    const starRect = {
+      x: laneCenters[star.lane] - 12,
+      y: star.y - 12,
+      w: 24,
+      h: 24,
+      type: 'star',
+    };
+
+    if (hit(playerRect, starRect)) {
       star.y = canvas.height + 50;
-      score += 5;
+      starsCollected += 1;
+      comboCount += 1;
+      comboMultiplier = 1 + Math.floor(comboCount / 3);
+      const gained = 5 * comboMultiplier;
+      score += gained;
+      comboStatEl.textContent = `x${comboMultiplier}`;
+
+      spawnBurst(laneCenters[star.lane], star.y, '#ffe16a');
+
+      if (!mission.complete && starsCollected >= mission.goal) {
+        mission.complete = true;
+        score += mission.bonus;
+        missionEl.textContent = `Mission complete! +${mission.bonus} bonus`; 
+        spawnBurst(canvas.width / 2, 120, '#91ff9f');
+      }
+
       scoreEl.textContent = score;
+    } else if (star.y > canvas.height + 40) {
+      resetCombo();
     }
   });
 
+  powerUps.forEach((power) => {
+    power.y += gameSpeed + 0.4;
+    drawShieldPowerUp(laneCenters[power.lane], power.y);
+
+    const powerRect = {
+      x: laneCenters[power.lane] - 16,
+      y: power.y - 16,
+      w: 32,
+      h: 32,
+      type: 'power',
+    };
+
+    if (hit(playerRect, powerRect)) {
+      spawnBurst(laneCenters[power.lane], power.y, '#9ffcff');
+      power.y = canvas.height + 80;
+      powerState.shieldFrames = 360;
+      powerEl.textContent = 'Power-Up: Shield active';
+    }
+  });
+
+  drawParticles();
+
   obstacles = obstacles.filter((obstacle) => obstacle.y < canvas.height + 120);
   stars = stars.filter((star) => star.y < canvas.height + 60);
+  powerUps = powerUps.filter((power) => power.y < canvas.height + 60);
 
   score += 1;
   scoreEl.textContent = score;
 
-  if (score % 140 === 0) gameSpeed += 0.35;
+  if (score >= nextLevelScore) {
+    level += 1;
+    nextLevelScore += 150;
+    gameSpeed += 0.25;
+    levelBannerFrames = 120;
+  }
+
+  missionEl.textContent = mission.complete
+    ? `Mission complete! +${mission.bonus} bonus`
+    : `Mission: Collect ${mission.goal} stars (${starsCollected}/${mission.goal})`;
+
+  if (levelBannerFrames > 0) {
+    levelBannerFrames -= 1;
+    ctx.fillStyle = '#111d';
+    ctx.fillRect(85, 72, canvas.width - 170, 56);
+    ctx.fillStyle = '#ffea76';
+    ctx.font = 'bold 30px Comic Sans MS';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Level ${level}!`, canvas.width / 2, 110);
+  }
 
   animationId = requestAnimationFrame(loop);
 }
